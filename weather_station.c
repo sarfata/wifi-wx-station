@@ -577,6 +577,23 @@ void print_nummeas(unsigned char mode)
 	}
 }
 
+void send_meas(void)
+{
+	// textbuffer is only 20 bytes long - we need a bigger buffer
+	char buf[50];
+	init_USART();
+	
+	// Wake up the wifly module with a byte and give it some time to freshen up
+	writestr_USART("&", 0);
+	_delay_ms(100);
+	
+	// Prepare a string with all parameters.
+	sprintf (buf, "temp=%i&humidity=%i&pressure=%i", barotemp, humvalu, baropres);
+	writestr_USART(buf, 0);
+	
+	stop_USART();
+}
+
 //############################## MAIN ##############################################
 
 int main(void)
@@ -667,6 +684,10 @@ int main(void)
 				humvalu = (((long)humoffs-(long)humidfreq)*(long)humsens)>>12;	
 				if(savemode == 0)
 					sleepcount--;		// count down to go to SLEEP
+			}
+			// Upload the measures every minutes
+			if (WsecCount == 0) {
+				send_meas();
 			}
 			disp_values();
 			// store measurement-Values into EEPROM
